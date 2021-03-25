@@ -17,11 +17,5 @@ int main(int argc, char **argv) {
         cv::cvtColor(images.at(i), images.at(i), cv::COLOR_BGR2GRAY);
         cv::imwrite(output_img_path + std::to_string(i) + ".jpg", images.at(i));
     }
-
-
-    cv::namedWindow("Display window", cv::WINDOW_AUTOSIZE);
-    //cv::imshow("Display window", gs_image);
-
-    cv::waitKey(0);
     return 0;
 }
