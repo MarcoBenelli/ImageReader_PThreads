@@ -2,42 +2,67 @@
 #include <filesystem>
 #include <chrono>
 
+#include "sequentialImgReader.h"
 #include "parallelImgReader.h"
 
 int main() {
     std::string inputImgPath = "../input_images/";
-    std::string outputImgPath= "../output_images/";
-    std::vector<std::string> imgNames= std::vector<std::string>();
-    int numThreads = 8;
-    int numImgs = 0;
+    std::string outputImgPath = "../output_images/";
+    std::vector<std::string> imgNames = std::vector<std::string>();
 
     // Erase output_images folder
-    std::string eraseCommand = "rm -f "+ outputImgPath + "*";
+    /*
+    std::string eraseCommand = "rm -f " + outputImgPath + "*";
     std::system(eraseCommand.c_str());
+     */
 
     // Populate imgNames vector with file names
-    for (auto &p: std::filesystem::directory_iterator(inputImgPath)) {
+    for (auto &p: std::filesystem::directory_iterator(inputImgPath))
         imgNames.emplace_back(p.path().string());
-        numImgs++;
+
+    cv::Mat *images;
+    int numTests = 16;
+    int time = 0;
+
+    for (int i = 0; i < numTests; i++) {
+        // Allocate images array
+        images = new cv::Mat[imgNames.size()];
+
+        auto start = std::chrono::system_clock::now();
+        sequentialRead(images, imgNames);
+        auto end = std::chrono::system_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        time += elapsed.count();
+
+        // Deallocate heap memory
+        delete[] images;
     }
+    printf("Elapsed time for sequential implementation: %d ms\n", time / numTests);
 
-    // Allocate images array
-    auto *images = new cv::Mat[numImgs];
+    for (int numThreads = 2; numThreads <= 8; numThreads++) {
+        time = 0;
+        for (int i = 0; i < numTests; i++) {
+            // Reallocate images array
+            images = new cv::Mat[imgNames.size()];
 
-    auto start = std::chrono::system_clock::now();
-    parallelRead(images, imgNames, numThreads, numImgs);
-    auto end = std::chrono::system_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    printf("Elapsed time: %ld\n", elapsed.count());
+            auto start = std::chrono::system_clock::now();
+            parallelRead(images, imgNames, numThreads);
+            auto end = std::chrono::system_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            time += elapsed.count();
+
+            // Deallocate heap memory
+            delete[] images;
+        }
+        printf("Elapsed time for parallel implementation with %d threads: %d ms\n", numThreads, time / numTests);
+    }
 
     // Write images to output_images directory
-    for (int i = 0; i < numImgs; i++) {
+    /*
+     for (int i = 0; i < imgNames.size(); i++) {
         cv::imwrite(outputImgPath + std::to_string(i) + ".jpg", images[i]);
     }
+     */
 
-    //cv::cvtColor(images.at(i), images.at(i), cv::COLOR_BGR2GRAY);
-
-    // Deallocate heap memory
-    delete[] images;
     return 0;
 }

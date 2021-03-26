@@ -8,6 +8,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -pthread")
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-add_executable(ImageReader_PThreads main.cpp parallelImgReader.cpp parallelImgReader.h)
+add_executable(ImageReader_PThreads main.cpp parallelImgReader.cpp parallelImgReader.h sequentialImgReader.cpp sequentialImgReader.h)
 
 target_link_libraries(ImageReader_PThreads ${OpenCV_LIBS})

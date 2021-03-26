@@ -1,5 +1,5 @@
 //
-// Created by luca on 26/03/21.
+// Created by Benelli, Bindini on 26/03/21.
 //
 
 #include "parallelImgReader.h"
@@ -7,13 +7,11 @@
 cv::Mat *images_;
 std::vector<std::string> imgNames_;
 int numThreads_;
-int numImgs_;
 
-void parallelRead(cv::Mat *images, std::vector<std::string> &imgNames, int numThreads, int numImgs){
+void parallelRead(cv::Mat *images, std::vector<std::string> &imgNames, int numThreads){
     images_ = images;
     imgNames_ = imgNames;
     numThreads_ = numThreads;
-    numImgs_ = numImgs;
 
     // Create and allocate handles
     auto *threadHandles = (pthread_t *) malloc(numThreads_ * sizeof(pthread_t));
@@ -33,9 +31,9 @@ void parallelRead(cv::Mat *images, std::vector<std::string> &imgNames, int numTh
 
 void *imgRead(void *index) {
     long myIndex = (long) index;
-    printf("Starting Thread-%ld\n",myIndex);
-    for (long i = myIndex; i < numImgs_; i += numThreads_){
-        printf("Thread-%ld reads %ld-th image\n", myIndex, i);
+    //printf("Starting Thread-%ld\n",myIndex);
+    for (long i = myIndex; i < imgNames_.size(); i += numThreads_){
+        //printf("Thread-%ld reads %ld-th image\n", myIndex, i);
         images_[i] = cv::imread(imgNames_[i]);
     }
     return nullptr;
