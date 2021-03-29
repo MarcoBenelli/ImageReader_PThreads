@@ -1,14 +1,17 @@
 #include <opencv2/imgproc.hpp>
 #include <filesystem>
 #include <chrono>
+#include <unistd.h>
 
 #include "sequentialImgReader.h"
 #include "parallelImgReader.h"
 
 int main() {
     std::string inputImgPath = "../input_images/";
-    std::string outputImgPath = "../output_images/";
+    //std::string outputImgPath = "../output_images/";
     std::vector<std::string> imgNames = std::vector<std::string>();
+    int numTests = 16;
+    long maxNumThreads = sysconf(_SC_NPROCESSORS_CONF);
 
     // Erase output_images folder
     /*
@@ -21,15 +24,13 @@ int main() {
         imgNames.emplace_back(p.path().string());
 
     cv::Mat *images;
-    int numTests = 16;
     int time = 0;
 
     for (int i = 0; i < numTests; i++) {
-        // Allocate images array
-        images = new cv::Mat[imgNames.size()];
 
         auto start = std::chrono::system_clock::now();
-        sequentialRead(images, imgNames);
+        sequentialRead(imgNames);
+        images = sequentialGetImages();
         auto end = std::chrono::system_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         time += elapsed.count();
@@ -39,14 +40,12 @@ int main() {
     }
     printf("Elapsed time for sequential implementation: %d ms\n", time / numTests);
 
-    for (int numThreads = 2; numThreads <= 8; numThreads++) {
+    for (int numThreads = 1; numThreads <= maxNumThreads; numThreads++) {
         time = 0;
         for (int i = 0; i < numTests; i++) {
-            // Reallocate images array
-            images = new cv::Mat[imgNames.size()];
-
             auto start = std::chrono::system_clock::now();
-            parallelRead(images, imgNames, numThreads);
+            parallelRead(imgNames, numThreads);
+            images = parallelGetImages();
             auto end = std::chrono::system_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
             time += elapsed.count();
@@ -58,11 +57,7 @@ int main() {
     }
 
     // Write images to output_images directory
-    /*
-     for (int i = 0; i < imgNames.size(); i++) {
-        cv::imwrite(outputImgPath + std::to_string(i) + ".jpg", images[i]);
-    }
-     */
+    //cv::imwrite(outputImgPath + std::to_string(i) + ".jpg", images[i]);
 
     return 0;
 }

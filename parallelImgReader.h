@@ -12,6 +12,9 @@
 void *imgRead(void *index);
 
 // Parallel image reader using pthreads
-void parallelRead(cv::Mat *images, std::vector<std::string> &imgNames, int numThreads);
+void parallelRead(std::vector<std::string> &imgNames_, int numThreads_);
+
+// Getter for images
+cv::Mat *parallelGetImages();
 
 #endif //IMAGEREADER_PTHREADS_PARALLELIMGREADER_H
