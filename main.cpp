@@ -24,10 +24,9 @@ int main() {
         imgNames.emplace_back(p.path().string());
 
     cv::Mat *images;
-    int time;
     std::vector<std::string> imgNamesSubset(imgNames.begin(),
                                             imgNames.begin() + (int) sqrt((double) maxNumThreads * imgNames.size()));
-    time = 0;
+    int time = 0;
 
     for (int i = 0; i < numTests; i++) {
         auto start = std::chrono::system_clock::now();
@@ -40,7 +39,7 @@ int main() {
         // Deallocate heap memory
         delete[] images;
     }
-    printf("Elapsed time for sequential implementation and %d images: %d ms\n", (int)
+    printf("Elapsed time for sequential implementation with %d images: %d ms\n", (int)
             imgNamesSubset.size(), time / numTests);
 
     for (int numThreads = 1; numThreads <= maxNumThreads; numThreads++) {
@@ -60,9 +59,8 @@ int main() {
                (int) imgNamesSubset.size(), time / numTests);
     }
 
-    time = 0;
-
     for (int numImgs = maxNumThreads; numImgs <= imgNames.size(); numImgs *= 2) {
+        time = 0;
         for (int i = 0; i < numTests; i++) {
             std::vector<std::string> imgNamesTest(imgNames.begin(), imgNames.begin() + numImgs);
             auto start = std::chrono::system_clock::now();
@@ -75,8 +73,8 @@ int main() {
             // Deallocate heap memory
             delete[] images;
         }
-        printf("Elapsed time per image for sequential implementation with %d images: %d ms\n",
-               numImgs, (time / numTests)/numImgs);
+        printf("Elapsed time for sequential implementation with %d images: %d ms\n",
+               numImgs, time / numTests);
 
     }
 
@@ -94,8 +92,8 @@ int main() {
             // Deallocate heap memory
             delete[] images;
         }
-        printf("Elapsed time per image for parallel implementation with %d threads and %d images: %d ms\n", maxNumThreads,
-               numImgs, (time / numTests)/numImgs);
+        printf("Elapsed time for parallel implementation with %d threads and %d images: %d ms\n", maxNumThreads,
+               numImgs, time / numTests);
 
     }
 
