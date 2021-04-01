@@ -11,7 +11,7 @@ int main() {
     //std::string outputImgPath = "../output_images/";
     std::vector<std::string> imgNames = std::vector<std::string>();
     int numTests = 16;
-    long maxNumThreads = sysconf(_SC_NPROCESSORS_CONF);
+    int maxNumThreads = (int) sysconf(_SC_NPROCESSORS_CONF);
 
     // Erase output_images folder
     /*
@@ -24,12 +24,14 @@ int main() {
         imgNames.emplace_back(p.path().string());
 
     cv::Mat *images;
-    int time = 0;
+    int time;
+    std::vector<std::string> imgNamesSubset(imgNames.begin(),
+                                            imgNames.begin() + (int) sqrt((double) maxNumThreads * imgNames.size()));
+    time = 0;
 
     for (int i = 0; i < numTests; i++) {
-
         auto start = std::chrono::system_clock::now();
-        sequentialRead(imgNames);
+        sequentialRead(imgNamesSubset);
         images = sequentialGetImages();
         auto end = std::chrono::system_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
@@ -38,13 +40,14 @@ int main() {
         // Deallocate heap memory
         delete[] images;
     }
-    printf("Elapsed time for sequential implementation: %d ms\n", time / numTests);
+    printf("Elapsed time for sequential implementation and %d images: %d ms\n", (int)
+            imgNamesSubset.size(), time / numTests);
 
     for (int numThreads = 1; numThreads <= maxNumThreads; numThreads++) {
         time = 0;
         for (int i = 0; i < numTests; i++) {
             auto start = std::chrono::system_clock::now();
-            parallelRead(imgNames, numThreads);
+            parallelRead(imgNamesSubset, numThreads);
             images = parallelGetImages();
             auto end = std::chrono::system_clock::now();
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
@@ -53,7 +56,47 @@ int main() {
             // Deallocate heap memory
             delete[] images;
         }
-        printf("Elapsed time for parallel implementation with %d threads: %d ms\n", numThreads, time / numTests);
+        printf("Elapsed time for parallel implementation with %d threads and %d images: %d ms\n", numThreads,
+               (int) imgNamesSubset.size(), time / numTests);
+    }
+
+    time = 0;
+
+    for (int numImgs = maxNumThreads; numImgs <= imgNames.size(); numImgs *= 2) {
+        for (int i = 0; i < numTests; i++) {
+            std::vector<std::string> imgNamesTest(imgNames.begin(), imgNames.begin() + numImgs);
+            auto start = std::chrono::system_clock::now();
+            sequentialRead(imgNamesTest);
+            images = sequentialGetImages();
+            auto end = std::chrono::system_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            time += elapsed.count();
+
+            // Deallocate heap memory
+            delete[] images;
+        }
+        printf("Elapsed time per image for sequential implementation with %d images: %d ms\n",
+               numImgs, (time / numTests)/numImgs);
+
+    }
+
+    for (int numImgs = maxNumThreads; numImgs <= imgNames.size(); numImgs *= 2) {
+        time = 0;
+        for (int i = 0; i < numTests; i++) {
+            std::vector<std::string> imgNamesTest(imgNames.begin(), imgNames.begin() + numImgs);
+            auto start = std::chrono::system_clock::now();
+            parallelRead(imgNamesTest, maxNumThreads);
+            images = parallelGetImages();
+            auto end = std::chrono::system_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            time += elapsed.count();
+
+            // Deallocate heap memory
+            delete[] images;
+        }
+        printf("Elapsed time per image for parallel implementation with %d threads and %d images: %d ms\n", maxNumThreads,
+               numImgs, (time / numTests)/numImgs);
+
     }
 
     // Write images to output_images directory

@@ -8,7 +8,7 @@ static cv::Mat *images;
 static std::vector<std::string> imgNames;
 static int numThreads;
 
-void parallelRead(std::vector<std::string> &imgNames_, int numThreads_){
+void parallelRead(std::vector<std::string> &imgNames_, int numThreads_) {
     images = new cv::Mat[imgNames_.size()];
     imgNames = imgNames_;
     numThreads = numThreads_;
@@ -29,14 +29,14 @@ void parallelRead(std::vector<std::string> &imgNames_, int numThreads_){
     free(threadHandles);
 }
 
-cv::Mat *parallelGetImages(){
+cv::Mat *parallelGetImages() {
     return images;
 }
 
 void *imgRead(void *index) {
     long myIndex = (long) index;
     //printf("Starting Thread-%ld\n",myIndex);
-    for (long i = myIndex; i < imgNames.size(); i += numThreads){
+    for (long i = myIndex; i < imgNames.size(); i += numThreads) {
         //printf("Thread-%ld reads %ld-th image\n", myIndex, i);
         images[i] = cv::imread(imgNames[i]);
     }
